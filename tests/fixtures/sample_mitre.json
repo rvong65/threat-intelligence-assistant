@@ -1,0 +1,36 @@
+{
+  "type": "bundle",
+  "id": "bundle--test",
+  "objects": [
+    {
+      "type": "attack-pattern",
+      "id": "attack-pattern--test-t1059",
+      "name": "Command and Scripting Interpreter",
+      "description": "Adversaries may abuse command and script interpreters to execute commands.",
+      "kill_chain_phases": [
+        {"kill_chain_name": "mitre-attack", "phase_name": "execution"}
+      ],
+      "external_references": [
+        {
+          "source_name": "mitre-attack",
+          "external_id": "T1059",
+          "url": "https://attack.mitre.org/techniques/T1059"
+        }
+      ],
+      "x_mitre_platforms": ["Windows", "Linux"],
+      "x_mitre_is_subtechnique": false,
+      "x_mitre_deprecated": false,
+      "revoked": false
+    },
+    {
+      "type": "attack-pattern",
+      "id": "attack-pattern--revoked",
+      "name": "Revoked Technique",
+      "description": "Should be skipped.",
+      "revoked": true,
+      "external_references": [
+        {"source_name": "mitre-attack", "external_id": "T9999"}
+      ]
+    }
+  ]
+}

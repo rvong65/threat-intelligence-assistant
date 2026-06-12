@@ -1,0 +1,29 @@
+# Core
+langchain>=0.3.0,<0.4.0
+langchain-community>=0.3.0,<0.4.0
+langchain-core>=0.3.85,<1.0.0
+langchain-ollama>=0.2.0,<0.4.0
+langchain-groq>=0.2.0,<0.4.0
+groq>=0.13.0,<1.0.0
+langchain-huggingface>=0.1.2,<0.2.0
+sentence-transformers>=3.0,<4.0
+# Required by nomic-ai/nomic-embed-text-v1 custom modeling code (PyPI only).
+einops>=0.7.0,<1.0.0
+
+# Vector store
+faiss-cpu>=1.7.4,<2.0.0
+
+# Optional local vector store (uncomment if using Chroma locally)
+# chromadb>=0.5.0,<1.0.0
+
+# Config and data
+pydantic>=2.0,<3.0
+pydantic-settings>=2.0,<3.0
+python-dotenv>=1.0,<2.0
+requests>=2.31,<3.0
+
+# UI
+streamlit>=1.32,<2.0
+
+# Dev / tests
+pytest>=8.0,<9.0

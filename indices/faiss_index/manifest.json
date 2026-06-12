@@ -1,0 +1,15 @@
+{
+  "corpus_version": "1.0.0",
+  "vectorstore_backend": "faiss",
+  "embedding_model": "nomic-embed-text",
+  "embedding_provider": "ollama",
+  "document_count": 3306,
+  "chunk_count": 3312,
+  "source_counts": {
+    "mitre_attack": 697,
+    "cisa_kev": 1614,
+    "mitre_software": 821,
+    "mitre_group": 174
+  },
+  "built_at": "2026-06-10T13:27:29.431021+00:00"
+}

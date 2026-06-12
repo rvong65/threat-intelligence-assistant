@@ -1,0 +1,2 @@
+# System packages for Streamlit Community Cloud (if needed).
+# FAISS CPU wheels are bundled via pip; leave empty unless you add OS deps.
