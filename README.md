@@ -310,7 +310,6 @@ threat-intelligence-assistant/
 │   ├── smoke_test.py      # Pipeline smoke test
 │   └── validation_matrix.py
 ├── indices/faiss_index/   # Committed FAISS index (index.faiss, index.pkl, manifest.json)
-├── packages.txt           # Optional Streamlit Cloud system deps (empty by default)
 ├── tests/                 # pytest suite (48 tests)
 ├── data/raw/              # Gitignored — downloaded at ingest
 ├── data/processed/        # Gitignored — regenerated at ingest
