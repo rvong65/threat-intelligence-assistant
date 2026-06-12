@@ -35,7 +35,7 @@ This project asks: *Can a small, transparent RAG pipeline deliver fast, analyst-
 | **Embeddings** | Ollama `nomic-embed-text` | HuggingFace `nomic-ai/nomic-embed-text-v1` (pinned revision) |
 | **Vector store** | FAISS (committed index) | FAISS (committed index) |
 | **Config** | Pydantic Settings + `.env` | Streamlit Secrets + env |
-| **Tests** | pytest (48 tests) | Same pipeline via `validation_matrix.py` |
+| **Tests** | pytest (49 tests) | Same pipeline via `validation_matrix.py` |
 
 ---
 
@@ -51,6 +51,8 @@ This project indexes **MITRE ATT&CK Enterprise** STIX data and the **CISA Known 
 | `known_exploited_vulnerabilities.csv` | [CISA KEV catalog](https://www.cisa.gov/known-exploited-vulnerabilities-catalog) | Actively exploited CVEs, vendors, products, remediation deadlines |
 
 **Indexed corpus (v1.0.0):** 3,306 documents → 3,312 chunks — 697 techniques, 174 groups, 821 software, 1,614 KEV entries.
+
+**Data freshness:** The committed FAISS index is a **point-in-time snapshot** — see `built_at` in [`indices/faiss_index/manifest.json`](indices/faiss_index/manifest.json) (currently **2026-06-10**). MITRE and CISA publish updates regularly. To refresh the corpus, run `python scripts/ingest.py --build-index` and recommit `indices/faiss_index/`.
 
 **License compliance**
 
@@ -164,9 +166,13 @@ flowchart LR
 
 ## 🚀 Live Demo
 
-> **Coming soon** — Streamlit Community Cloud URL will be added here after deploy.
+**[▶ Open the live app on Streamlit Cloud](https://threat-intelligence-rag-assistant.streamlit.app/)** 
 
-Until then, run locally:
+**Screenshot** 
+![Threat Intelligence Assistant — example query “How is T1059 used?” with citations, confidence score, and sidebar sources](screenshots/demo-screenshot.png)
+*Illustrative example — answers are grounded in retrieved MITRE/KEV chunks; wording and results may vary. Citations and sidebar sources reflect the retrieval pipeline.*
+
+Or run locally:
 
 ```powershell
 streamlit run app.py
@@ -306,7 +312,7 @@ threat-intelligence-assistant/
 │   ├── smoke_test.py      # Pipeline smoke test
 │   └── validation_matrix.py
 ├── indices/faiss_index/   # Committed FAISS index (index.faiss, index.pkl, manifest.json)
-├── tests/                 # pytest suite (48 tests)
+├── tests/                 # pytest suite (49 tests)
 ├── data/raw/              # Gitignored — downloaded at ingest
 ├── data/processed/        # Gitignored — regenerated at ingest
 ├── requirements.txt
