@@ -179,8 +179,8 @@ streamlit run app.py
 ### Prerequisites
 
 - Python 3.11+
-- **Local LLM path:** [Ollama](https://ollama.com/) with `nomic-embed-text` and `gemma3:4b` (~8 GiB RAM)
-- **Cloud path:** `GROQ_API_KEY` in environment or Streamlit Secrets (maintainer only)
+- **Default (cloud):** `GROQ_API_KEY` in environment or Streamlit Secrets — matches `.env.example`
+- **Local Ollama path:** edit `.env` per the local block at the bottom of `.env.example` ([Ollama](https://ollama.com/) with `nomic-embed-text` and `gemma3:4b`, ~8 GiB RAM)
 
 ### Setup
 
@@ -191,6 +191,8 @@ python -m venv .venv
 .\.venv\Scripts\activate
 pip install -r requirements.txt
 copy .env.example .env
+# Cloud: set GROQ_API_KEY in your environment (or Streamlit Secrets when deploying).
+# Local: switch .env to the Ollama values in the comment block at the bottom of .env.example.
 ```
 
 **First-time index build** (if not using the committed index):
@@ -215,19 +217,13 @@ python scripts/validation_matrix.py
 
 ### Streamlit Cloud (maintainer)
 
-Main file: **`app.py`**. Set secrets (example):
+Main file: **`app.py`**. In **Settings → Secrets**, mirror `.env.example` (cloud profile). Minimum:
 
 ```toml
-DEPLOYMENT_PROFILE = "cloud"
-LLM_PROVIDER = "groq"
-LLM_MODEL = "llama-3.1-8b-instant"
 GROQ_API_KEY = "your-groq-api-key"
-EMBEDDING_PROVIDER = "huggingface"
-HUGGINGFACE_EMBEDDING_MODEL = "nomic-ai/nomic-embed-text-v1"
-HUGGINGFACE_EMBEDDING_REVISION = "3ac47f125a41961d13b397d0332866be2f9152e1"
-HARD_ABSTENTION_ENABLED = "true"
-LLM_REWRITE_FOLLOWUPS = "false"
 ```
+
+All other keys already match repo defaults (`DEPLOYMENT_PROFILE=cloud`, Groq LLM, HuggingFace embeddings). Add explicit secrets only if you override defaults.
 
 End-users do not provide API keys; credentials are configured by the maintainer only.
 

@@ -32,6 +32,15 @@ def test_is_groq_chat_model(model: str, expected: bool) -> None:
     assert is_groq_chat_model(model) is expected
 
 
+def test_default_settings_target_cloud_deploy() -> None:
+    settings = Settings(_env_file=None)
+    assert settings.deployment_profile == DeploymentProfile.CLOUD
+    assert settings.llm_provider == LLMProvider.GROQ
+    assert settings.llm_model == GROQ_DEFAULT_LLM_MODEL
+    assert settings.embedding_provider == EmbeddingProvider.HUGGINGFACE
+    assert settings.llm_rewrite_followups is False
+
+
 def test_cloud_profile_defaults_to_groq_and_hf() -> None:
     settings = Settings(
         deployment_profile=DeploymentProfile.CLOUD,

@@ -220,8 +220,8 @@ def main() -> int:
 
     if not settings.uses_groq_llm():
         print(
-            "NOTE: Running on local Ollama. Set DEPLOYMENT_PROFILE=cloud in .env "
-            "for Groq cloud simulation.\n"
+            "NOTE: Running on local Ollama. Defaults target cloud deploy; set "
+            "DEPLOYMENT_PROFILE=local in .env for Ollama-only dev.\n"
         )
 
     embeddings = get_embeddings(settings)

@@ -68,18 +68,18 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # Deployment
-    deployment_profile: DeploymentProfile = DeploymentProfile.LOCAL
+    # Deployment (cloud defaults match .env.example / Streamlit Community Cloud)
+    deployment_profile: DeploymentProfile = DeploymentProfile.CLOUD
 
     # LLM
-    llm_provider: LLMProvider = LLMProvider.OLLAMA
-    llm_model: str = OLLAMA_DEFAULT_LLM_MODEL
+    llm_provider: LLMProvider = LLMProvider.GROQ
+    llm_model: str = GROQ_DEFAULT_LLM_MODEL
     together_api_key: str = ""
     fireworks_api_key: str = ""
     ollama_base_url: str = "http://localhost:11434"
 
     # Embeddings
-    embedding_provider: EmbeddingProvider = EmbeddingProvider.OLLAMA
+    embedding_provider: EmbeddingProvider = EmbeddingProvider.HUGGINGFACE
     embedding_model: str = "nomic-embed-text"
     huggingface_embedding_model: str = "nomic-ai/nomic-embed-text-v1"
     huggingface_embedding_revision: str = HUGGINGFACE_NOMIC_EMBED_REVISION
@@ -94,7 +94,7 @@ class Settings(BaseSettings):
     retrieval_top_k: int = Field(default=5, ge=1, le=20)
     confidence_threshold: int = Field(default=40, ge=0, le=100)
     hard_abstention_enabled: bool = Field(default=True, validation_alias="HARD_ABSTENTION_ENABLED")
-    llm_rewrite_followups: bool = Field(default=True, validation_alias="LLM_REWRITE_FOLLOWUPS")
+    llm_rewrite_followups: bool = Field(default=False, validation_alias="LLM_REWRITE_FOLLOWUPS")
     include_groups_software: bool = Field(default=True, validation_alias="INCLUDE_GROUPS_SOFTWARE")
     nvd_enrich_limit: int = Field(default=100, ge=0, le=2000)
     ingest_batch_size: int = Field(default=32, ge=1, le=256)
