@@ -1,0 +1,4 @@
+# Development and CI — install app deps plus test tools.
+-r requirements.txt
+
+pytest>=8.0,<9.0

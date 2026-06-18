@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from config.settings import get_settings
 from src.loaders.mitre_groups_software import load_mitre_groups_software
 
@@ -12,7 +14,7 @@ def test_load_mitre_groups_software_from_corpus() -> None:
     settings = get_settings()
     path: Path = settings.mitre_path
     if not path.exists():
-        return
+        pytest.skip("MITRE raw file not present (data/raw/)")
 
     docs = load_mitre_groups_software(path)
     assert len(docs) > 0

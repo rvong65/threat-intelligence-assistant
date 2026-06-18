@@ -2,7 +2,144 @@
 
 A **retrieval-augmented generation (RAG)** chat application that helps security analysts explore **MITRE ATT&CK** and **CISA Known Exploited Vulnerabilities (KEV)** with **grounded, cited, explainable** answers — not open-web speculation.
 
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://threat-intelligence-rag-assistant.streamlit.app/)
+
 ---
+
+## Table of Contents
+
+**Get started**
+- [Live Demo](#live-demo)
+- [Features](#features)
+- [Quick Start](#quick-start)
+
+**Overview**
+- [Problem & Motivation](#problem-motivation)
+- [Tech Stack](#tech-stack)
+- [Data Sources & Attribution](#data-sources)
+
+**Technical**
+- [Architecture & Design Choices](#architecture-design-choices)
+  - [Development Journey](#development-journey)
+- [Safety Considerations](#safety-considerations)
+- [CI/CD](#cicd)
+- [Project Status & Build Log](#project-status)
+- [Repository Layout](#repository-layout)
+
+**Legal & contact**
+- [License](#license)
+- [Contact / Next Steps](#contact)
+
+---
+
+<a id="live-demo"></a>
+
+## 🚀 Live Demo
+
+**[▶ Open the live app on Streamlit Cloud](https://threat-intelligence-rag-assistant.streamlit.app/)**
+
+**Before you open the app:**
+- **Cold start:** This app runs on Streamlit Community Cloud and may go to sleep after inactivity. If you see **“Zzzz — This app has gone to sleep due to inactivity”**, click **“Yes, get this app back up!”** to wake it — anyone can do this; you don’t need to contact the maintainer. Startup may take a minute after you click.
+
+**Screenshot:**
+
+![Threat Intelligence Assistant — example query “How is T1059 used?” with citations, confidence score, and sidebar sources](docs/screenshots/demo-screenshot.png)
+
+*Illustrative example — answers are grounded in retrieved MITRE/KEV chunks; wording and results may vary. Citations and sidebar sources reflect the retrieval pipeline.*
+
+**Or run locally:**
+
+```powershell
+streamlit run app.py
+```
+
+---
+
+<a id="features"></a>
+
+## ✨ Features
+
+- **Grounded chat** — answers from retrieved MITRE ATT&CK + CISA KEV chunks only
+- **Mandatory citations** — inline `[T1059]`, `[G0007]`, `[CVE-…]` with sidebar source links
+- **Confidence score (0–100)** — transparent breakdown (retrieval, coverage, citation match)
+- **Query guard** — blocks greetings, weather, and vague off-topic prompts
+- **Hard abstention** — no speculative answer when evidence is below threshold
+- **Citation validation** — flags unverified IDs in the model output
+- **Metadata-aware retrieval** — entity ID boost, KEV re-ranking, keyword boost (`Windows`, etc.)
+- **Multi-turn memory** — short follow-ups (e.g. *what about PowerShell?*)
+- **Admin ingest panel** — local-only corpus validation and index rebuild
+- **Groq error UX** — friendly rate-limit / auth messages (no stack traces in chat)
+
+**Validation baseline (Groq cloud):** 11 PASS · 1 WARN · 0 FAIL across 12 inspector-style cases.  
+**Known WARN:** group queries like `G0007` may list many techniques while top-k retrieval only validates a subset — answer is useful; citation warnings are expected.
+
+| | Local `gemma3:4b` | Cloud Groq `llama-3.1-8b-instant` |
+|--|-------------------|-----------------------------------|
+| Matrix | ~5 PASS / ~7 WARN | **11 PASS / 1 WARN** |
+| Latency | Slower on CPU | Fast (hosted API) |
+| Best for | Dev / low RAM | Demo / production UI |
+
+---
+
+<a id="quick-start"></a>
+
+## Quick Start
+
+### Prerequisites
+
+- Python 3.11+
+- **Default (cloud):** `GROQ_API_KEY` in environment or Streamlit Secrets — matches `.env.example`
+- **Local Ollama path:** edit `.env` per the local block at the bottom of `.env.example` ([Ollama](https://ollama.com/) with `nomic-embed-text` and `gemma3:4b`, ~8 GiB RAM)
+
+### Setup
+
+```powershell
+git clone https://github.com/rvong65/threat-intelligence-assistant.git
+cd threat-intelligence-assistant
+python -m venv .venv
+.\.venv\Scripts\activate
+pip install -r requirements.txt
+copy .env.example .env
+# Cloud: set GROQ_API_KEY in your environment (or Streamlit Secrets when deploying).
+# Local: switch .env to the Ollama values in the comment block at the bottom of .env.example.
+```
+
+**First-time index build** (if not using the committed index):
+
+```powershell
+python scripts/ingest.py --build-index
+```
+
+**Run the app:**
+
+```powershell
+streamlit run app.py
+```
+
+**Run tests** (install dev dependencies first):
+
+```powershell
+pip install -r requirements-dev.txt
+pytest tests/ -q
+python scripts/smoke_test.py
+python scripts/validation_matrix.py
+```
+
+### Streamlit Cloud (maintainer)
+
+Main file: **`app.py`**. In **Settings → Secrets**, mirror `.env.example` (cloud profile). Minimum:
+
+```toml
+GROQ_API_KEY = "your-groq-api-key"
+```
+
+All other keys already match repo defaults (`DEPLOYMENT_PROFILE=cloud`, Groq LLM, HuggingFace embeddings). Add explicit secrets only if you override defaults.
+
+End-users do not provide API keys; credentials are configured by the maintainer only.
+
+---
+
+<a id="problem-motivation"></a>
 
 ## 🎯 Problem & Motivation
 
@@ -18,14 +155,18 @@ This project asks: *Can a small, transparent RAG pipeline deliver fast, analyst-
 
 ---
 
+<a id="tech-stack"></a>
+
 ## 🛠️ Tech Stack
 
 ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
 ![LangChain](https://img.shields.io/badge/LangChain-1C3C3C?style=for-the-badge&logo=langchain&logoColor=white)
 ![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
 ![FAISS](https://img.shields.io/badge/FAISS-0467DF?style=for-the-badge&logo=meta&logoColor=white)
-![Groq](https://img.shields.io/badge/Groq-F55036?style=for-the-badge&logo=fastapi&logoColor=white)
-![Ollama](https://img.shields.io/badge/Ollama-000000?style=for-the-badge&logo=ollama&logoColor=white)
+![Groq](https://img.shields.io/badge/Groq-LLM-orange?style=for-the-badge)
+![Ollama](https://img.shields.io/badge/Ollama-local-black?style=for-the-badge)
+![Pydantic](https://img.shields.io/badge/Pydantic-v2-E92063?style=for-the-badge&logo=pydantic&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/CI-GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)
 
 | Layer | Local development | Cloud deployment |
 |-------|-------------------|------------------|
@@ -36,8 +177,11 @@ This project asks: *Can a small, transparent RAG pipeline deliver fast, analyst-
 | **Vector store** | FAISS (committed index) | FAISS (committed index) |
 | **Config** | Pydantic Settings + `.env` | Streamlit Secrets + env |
 | **Tests** | pytest (49 tests) | Same pipeline via `validation_matrix.py` |
+| **CI** | GitHub Actions on push/PR | — |
 
 ---
+
+<a id="data-sources"></a>
 
 ## 📊 Data Sources & Attribution
 
@@ -85,6 +229,8 @@ Or run `python scripts/ingest.py --build-index` — it auto-downloads equivalent
 The codebase supports *optional* CVE detail enrichment via the [NIST NVD API](https://nvd.nist.gov/) (`python scripts/ingest.py --build-index --enrich-nvd`). This is **off by default**; the committed index and live demo do **not** include `nvd_cve` documents. KEV entries link to NVD pages for citation URLs only.
 
 ---
+
+<a id="architecture-design-choices"></a>
 
 ## 🏗️ Architecture & Design Choices
 
@@ -148,6 +294,8 @@ flowchart TB
 | **Dual deployment profile** | `DEPLOYMENT_PROFILE=local\|cloud` switches LLM/embedding providers without code changes |
 | **Pinned HF embed revision** | Avoid silently executing new remote modeling code on each cold start |
 
+<a id="development-journey"></a>
+
 ### Development Journey
 
 ```mermaid
@@ -159,105 +307,13 @@ flowchart LR
     E --> F[Retrieval tuning<br/>ID boost · KEV rerank]
     F --> G[Cloud profile<br/>Groq + HuggingFace]
     G --> H[Validation matrix<br/>11 PASS / 1 WARN / 0 FAIL]
-    H --> I[GitHub + Streamlit deploy<br/>MVP]
+    H --> I[GitHub + Streamlit deploy]
+    I --> J[CI pipeline<br/>GitHub Actions pytest]
 ```
 
 ---
 
-## 🚀 Live Demo
-
-**[▶ Open the live app on Streamlit Cloud](https://threat-intelligence-rag-assistant.streamlit.app/)** 
-
-**Screenshot** 
-![Threat Intelligence Assistant — example query “How is T1059 used?” with citations, confidence score, and sidebar sources](screenshots/demo-screenshot.png)
-*Illustrative example — answers are grounded in retrieved MITRE/KEV chunks; wording and results may vary. Citations and sidebar sources reflect the retrieval pipeline.*
-
-Or run locally:
-
-```powershell
-streamlit run app.py
-```
-
----
-
-## Quick Start
-
-### Prerequisites
-
-- Python 3.11+
-- **Default (cloud):** `GROQ_API_KEY` in environment or Streamlit Secrets — matches `.env.example`
-- **Local Ollama path:** edit `.env` per the local block at the bottom of `.env.example` ([Ollama](https://ollama.com/) with `nomic-embed-text` and `gemma3:4b`, ~8 GiB RAM)
-
-### Setup
-
-```powershell
-git clone https://github.com/rvong65/threat-intelligence-assistant.git
-cd threat-intelligence-assistant
-python -m venv .venv
-.\.venv\Scripts\activate
-pip install -r requirements.txt
-copy .env.example .env
-# Cloud: set GROQ_API_KEY in your environment (or Streamlit Secrets when deploying).
-# Local: switch .env to the Ollama values in the comment block at the bottom of .env.example.
-```
-
-**First-time index build** (if not using the committed index):
-
-```powershell
-python scripts/ingest.py --build-index
-```
-
-**Run the app:**
-
-```powershell
-streamlit run app.py
-```
-
-**Run tests:**
-
-```powershell
-pytest -v
-python scripts/smoke_test.py
-python scripts/validation_matrix.py
-```
-
-### Streamlit Cloud (maintainer)
-
-Main file: **`app.py`**. In **Settings → Secrets**, mirror `.env.example` (cloud profile). Minimum:
-
-```toml
-GROQ_API_KEY = "your-groq-api-key"
-```
-
-All other keys already match repo defaults (`DEPLOYMENT_PROFILE=cloud`, Groq LLM, HuggingFace embeddings). Add explicit secrets only if you override defaults.
-
-End-users do not provide API keys; credentials are configured by the maintainer only.
-
----
-
-## ✨ Features
-
-- **Grounded chat** — answers from retrieved MITRE ATT&CK + CISA KEV chunks only
-- **Mandatory citations** — inline `[T1059]`, `[G0007]`, `[CVE-…]` with sidebar source links
-- **Confidence score (0–100)** — transparent breakdown (retrieval, coverage, citation match)
-- **Query guard** — blocks greetings, weather, and vague off-topic prompts
-- **Hard abstention** — no speculative answer when evidence is below threshold
-- **Citation validation** — flags unverified IDs in the model output
-- **Metadata-aware retrieval** — entity ID boost, KEV re-ranking, keyword boost (`Windows`, etc.)
-- **Multi-turn memory** — short follow-ups (e.g. *what about PowerShell?*)
-- **Admin ingest panel** — local-only corpus validation and index rebuild
-- **Groq error UX** — friendly rate-limit / auth messages (no stack traces in chat)
-
-**Validation baseline (Groq cloud):** 11 PASS · 1 WARN · 0 FAIL across 12 inspector-style cases.  
-**Known WARN:** group queries like `G0007` may list many techniques while top-k retrieval only validates a subset — answer is useful; citation warnings are expected.
-
-| | Local `gemma3:4b` | Cloud Groq `llama-3.1-8b-instant` |
-|--|-------------------|-----------------------------------|
-| Matrix | ~5 PASS / ~7 WARN | **11 PASS / 1 WARN** |
-| Latency | Slower on CPU | Fast (hosted API) |
-| Best for | Dev / low RAM | Demo / production UI |
-
----
+<a id="safety-considerations"></a>
 
 ## 🛡️ Safety Considerations
 
@@ -277,28 +333,60 @@ Always verify critical findings against primary MITRE / NVD / vendor sources.
 
 ---
 
-## 📈 Project Status & Build Log
+<a id="cicd"></a>
 
-| Step | Focus |
-|------|-------|
-| **1** | Data ingestion — MITRE ATT&CK, CISA KEV, groups & software loaders |
-| **2** | RAG pipeline — FAISS index, retrieval, citations, confidence scoring |
-| **3** | Streamlit UI — chat, sidebar sources, conversational memory |
-| **4** | Responsible AI — query guard, hard abstention, citation validation |
-| **5** | Retrieval tuning — entity ID boost, KEV detection, metadata rerank |
-| **6** | Cloud integration — Groq LLM, HuggingFace embeddings, error UX |
-| **7** | Validation & deploy — matrix baseline, GitHub repo, Streamlit Cloud |
+## 🔄 CI/CD
 
-**Current status:** ✅ MVP complete — ready for public demo deploy
+**GitHub Actions** runs on every push and pull request to `main` / `master`:
+
+| Step | Action |
+|------|--------|
+| **Trigger** | Push or PR to `main` / `master` |
+| **Environment** | `ubuntu-latest`, Python 3.11 |
+| **Install** | `pip install -r requirements-dev.txt` |
+| **Test** | `pytest tests/ -q` |
+
+Workflow file: [`.github/workflows/tests.yml`](.github/workflows/tests.yml)
+
+Loader and unit tests use **fixtures** or skip when `data/raw/` is absent (e.g. full MITRE corpus groups/software loader). FAISS retriever integration runs against the **committed index** in CI using lightweight fake query embeddings for entity-ID coverage; semantic KEV ranking tests run locally with real embedding models. **`smoke_test.py`** and **`validation_matrix.py`** are maintainer scripts (require API keys / Ollama) and are not part of the CI workflow.
+
+**Streamlit Cloud** deploys independently from the `main` branch when connected to this repository (`app.py` + `requirements.txt`).
 
 ---
+
+<a id="project-status"></a>
+
+## 📈 Project Status & Build Log
+
+| Step | Focus | Status |
+|------|-------|------|
+| **1** | Data ingestion — MITRE ATT&CK, CISA KEV, groups & software loaders | ✅ |
+| **2** | RAG pipeline — FAISS index, retrieval, citations, confidence scoring | ✅ |
+| **3** | Streamlit UI — chat, sidebar sources, conversational memory | ✅ |
+| **4** | Responsible AI — query guard, hard abstention, citation validation | ✅ |
+| **5** | Retrieval tuning — entity ID boost, KEV detection, metadata rerank | ✅ |
+| **6** | Cloud integration — Groq LLM, HuggingFace embeddings, error UX | ✅ |
+| **7** | Validation & deploy — matrix baseline, GitHub repo, Streamlit Cloud | ✅ |
+| **8** | CI — GitHub Actions pytest workflow on push/PR | ✅ |
+
+**Current status:** ✅ MVP complete — live on Streamlit Cloud; CI on `main`
+
+---
+
+<a id="repository-layout"></a>
 
 ## 📁 Repository Layout
 
 ```
 threat-intelligence-assistant/
+├── .github/workflows/
+│   └── tests.yml          # CI: pytest on push/PR
+├── .streamlit/
+│   └── config.toml        # Streamlit theme (committed; secrets.toml is gitignored)
 ├── app.py                 # Streamlit entry point
 ├── config/                # Pydantic settings, deployment profiles
+├── docs/
+│   └── screenshots/       # README demo images
 ├── src/
 │   ├── embeddings/        # Ollama / HuggingFace embedding factory
 │   ├── ingestion/         # Chunking, normalization
@@ -309,17 +397,24 @@ threat-intelligence-assistant/
 │   └── vectorstore/       # FAISS load/build
 ├── scripts/
 │   ├── ingest.py          # Download, validate, build index
-│   ├── smoke_test.py      # Pipeline smoke test
+│   ├── smoke_test.py      # Pipeline smoke test (local / maintainer)
 │   └── validation_matrix.py
 ├── indices/faiss_index/   # Committed FAISS index (index.faiss, index.pkl, manifest.json)
 ├── tests/                 # pytest suite (49 tests)
+│   └── fixtures/          # Sample MITRE/KEV files for loader tests
 ├── data/raw/              # Gitignored — downloaded at ingest
 ├── data/processed/        # Gitignored — regenerated at ingest
-├── requirements.txt
+├── requirements.txt       # App + Streamlit Cloud runtime deps
+├── requirements-dev.txt   # Dev deps (includes pytest)
 ├── .env.example
+├── .gitignore             # Excludes .env, .venv, data/raw, secrets.toml, etc.
+├── README.md              # Project overview
 └── LICENSE                # MIT
 ```
+
 ---
+
+<a id="license"></a>
 
 ## 📄 License
 
@@ -329,6 +424,8 @@ MITRE ATT&CK ([license](https://github.com/mitre-attack/attack-stix-data?tab=Lic
 
 ---
 
+<a id="contact"></a>
+
 ## 🤝 Contact / Next Steps
 
 Open to feedback, suggestions, and mission-aligned collaboration.
@@ -337,8 +434,7 @@ Open to feedback, suggestions, and mission-aligned collaboration.
 
 - Citation validation against full group/software document text (fix G0007-style warnings)
 - Optional NVD enrichment at ingest time (not in default index)
+- Rebuild FAISS index with HuggingFace `search_document:` prefixes (embedding alignment)
 - Voice input / TTS for hands-free analyst queries
-- Expanded validation matrix and CI workflow on push
 
 ---
-
