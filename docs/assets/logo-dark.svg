@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 64" role="img" aria-label="Threat Intelligence Assistant">
+  <defs>
+    <linearGradient id="shield" x1="32" y1="4" x2="32" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#5eb8e8"/>
+      <stop offset="100%" stop-color="#2a9fd6"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(0 0)">
+    <path fill="url(#shield)" d="M32 4 52 13v16c0 13-9 23-20 27-11-4-20-14-20-27V13Z"/>
+    <rect x="21" y="25" width="22" height="17" rx="5" fill="#12151c" stroke="#5eead4" stroke-width="1.6"/>
+    <circle cx="28.5" cy="31" r="2.3" fill="#5eead4"/>
+    <circle cx="35.5" cy="31" r="2.3" fill="#5eead4"/>
+    <path fill="none" stroke="#5eead4" stroke-width="1.5" stroke-linecap="round" d="M28 37.5h8"/>
+    <circle cx="32" cy="20" r="2" fill="#5eead4"/>
+    <path fill="none" stroke="#5eead4" stroke-width="1.4" stroke-linecap="round" d="M32 23v2"/>
+  </g>
+  <text x="72" y="28" font-family="Segoe UI, system-ui, sans-serif" font-size="20" font-weight="700" fill="#f0f2f6">Threat Intelligence</text>
+  <text x="72" y="50" font-family="Segoe UI, system-ui, sans-serif" font-size="16" font-weight="600" fill="#8ec8f0">Assistant</text>
+</svg>

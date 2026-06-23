@@ -1,0 +1,51 @@
+# Threat Intelligence Assistant — default: cloud profile (Groq + HuggingFace embeddings)
+# Usage:
+#   docker compose up --build
+#   GROQ_API_KEY=gsk_... docker compose up --build
+#
+# Optional local Ollama profile:
+#   docker compose --profile local up --build
+
+services:
+  app:
+    build: .
+    ports:
+      - "8501:8501"
+    environment:
+      DEPLOYMENT_PROFILE: cloud
+      LLM_PROVIDER: groq
+      LLM_MODEL: llama-3.1-8b-instant
+      EMBEDDING_PROVIDER: huggingface
+      HUGGINGFACE_EMBEDDING_MODEL: nomic-ai/nomic-embed-text-v1
+      HUGGINGFACE_EMBEDDING_REVISION: 3ac47f125a41961d13b397d0332866be2f9152e1
+      LLM_REWRITE_FOLLOWUPS: "false"
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+    restart: unless-stopped
+
+  ollama:
+    profiles: ["local"]
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
+  app-local:
+    profiles: ["local"]
+    build: .
+    ports:
+      - "8501:8501"
+    environment:
+      DEPLOYMENT_PROFILE: local
+      LLM_PROVIDER: ollama
+      LLM_MODEL: gemma3:4b
+      EMBEDDING_PROVIDER: ollama
+      EMBEDDING_MODEL: nomic-embed-text
+      OLLAMA_BASE_URL: http://ollama:11434
+      LLM_REWRITE_FOLLOWUPS: "true"
+    depends_on:
+      - ollama
+    restart: unless-stopped
+
+volumes:
+  ollama_data:

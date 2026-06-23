@@ -1,0 +1,34 @@
+# Git and IDE
+.git
+.gitignore
+.idea
+.vscode
+
+# Python
+.venv
+venv
+__pycache__
+*.py[cod]
+.pytest_cache
+.coverage
+htmlcov
+*.egg-info
+
+# Secrets and local env
+.env
+.env.local
+.streamlit/secrets.toml
+
+# Data not needed at runtime (index is committed)
+data/raw
+data/processed
+
+# Dev / docs not needed in runtime image
+tests
+requirements-dev.txt
+scripts
+docs/screenshots
+.github
+CHANGELOG.md
+LICENSE
+README.md

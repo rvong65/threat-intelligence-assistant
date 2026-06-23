@@ -1,34 +1,46 @@
-# Threat Intelligence Assistant
+<h1 align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-dark.svg">
+    <img src="docs/assets/logo-light.svg" alt="Threat Intelligence Assistant" width="400">
+  </picture>
+</h1>
+
+[![Release](https://img.shields.io/github/v/release/rvong65/threat-intelligence-assistant?label=release)](https://github.com/rvong65/threat-intelligence-assistant/releases)
+[![CI](https://github.com/rvong65/threat-intelligence-assistant/actions/workflows/tests.yml/badge.svg)](https://github.com/rvong65/threat-intelligence-assistant/actions/workflows/tests.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://threat-intelligence-rag-assistant.streamlit.app/)
 
 A **retrieval-augmented generation (RAG)** chat application that helps security analysts explore **MITRE ATT&CK** and **CISA Known Exploited Vulnerabilities (KEV)** with **grounded, cited, explainable** answers — not open-web speculation.
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://threat-intelligence-rag-assistant.streamlit.app/)
-
 ---
 
-## Table of Contents
+<details open>
+<summary><strong>Table of Contents</strong></summary>
 
-**Get started**
-- [Live Demo](#live-demo)
-- [Features](#features)
-- [Quick Start](#quick-start)
+| Section | Description |
+|---------|-------------|
+| **Get started** | |
+| 🚀 [Live Demo](#live-demo) | Try the Streamlit app (Cloud, local, or Docker) |
+| ✨ [Features](#features) | Capabilities at a glance |
+| ⚡ [Quick Start](#quick-start) | Clone, install, run, test, Docker |
+| **Overview** | |
+| 🎯 [Problem & Motivation](#problem-motivation) | Why grounded threat-intel RAG matters |
+| 🛠️ [Tech Stack](#tech-stack) | Languages, libraries, CI |
+| 📊 [Data Sources & Attribution](#data-sources) | MITRE ATT&CK + CISA KEV |
+| 📌 [Version history](#version-history) | Release highlights |
+| **Technical** | |
+| 🏗️ [Architecture & Design Choices](#architecture-design-choices) | System design summary |
+| ↳ [Full architecture doc](docs/architecture.md) | Detailed system design (Mermaid) |
+| ↳ [Development Journey](#development-journey) | Build timeline diagram |
+| 🛡️ [Safety Considerations](#safety-considerations) | Ethics and guardrails |
+| 🔄 [CI/CD](#cicd) | GitHub Actions, Docker CI, Streamlit deploy |
+| 📈 [Project Status & Build Log](#project-status) | Milestone checklist |
+| 📁 [Repository Layout](#repository-layout) | File tree |
+| **Legal & contact** | |
+| 📄 [License](#license) | MIT + dataset attribution |
+| 🤝 [Contact / Next Steps](#contact) | Feedback and V2 roadmap |
 
-**Overview**
-- [Problem & Motivation](#problem-motivation)
-- [Tech Stack](#tech-stack)
-- [Data Sources & Attribution](#data-sources)
-
-**Technical**
-- [Architecture & Design Choices](#architecture-design-choices)
-  - [Development Journey](#development-journey)
-- [Safety Considerations](#safety-considerations)
-- [CI/CD](#cicd)
-- [Project Status & Build Log](#project-status)
-- [Repository Layout](#repository-layout)
-
-**Legal & contact**
-- [License](#license)
-- [Contact / Next Steps](#contact)
+</details>
 
 ---
 
@@ -83,15 +95,15 @@ streamlit run app.py
 
 <a id="quick-start"></a>
 
-## Quick Start
+## ⚡ Quick Start
 
 ### Prerequisites
 
-- Python 3.11+
+- Python 3.11+ **or** Docker
 - **Default (cloud):** `GROQ_API_KEY` in environment or Streamlit Secrets — matches `.env.example`
 - **Local Ollama path:** edit `.env` per the local block at the bottom of `.env.example` ([Ollama](https://ollama.com/) with `nomic-embed-text` and `gemma3:4b`, ~8 GiB RAM)
 
-### Setup
+### Setup (Python)
 
 ```powershell
 git clone https://github.com/rvong65/threat-intelligence-assistant.git
@@ -116,7 +128,24 @@ python scripts/ingest.py --build-index
 streamlit run app.py
 ```
 
-**Run tests** (install dev dependencies first):
+### Docker
+
+Cloud-profile container (port **8501**). Pass your Groq key via environment or a `.env` file in the project root:
+
+```powershell
+docker compose up --build
+# or: $env:GROQ_API_KEY="your-key"; docker compose up --build
+```
+
+Optional **local Ollama** profile (adds `ollama` service — pull models after start):
+
+```powershell
+docker compose --profile local up --build
+```
+
+See [`docs/architecture.md#deployment-topologies`](docs/architecture.md#deployment-topologies) for topology details.
+
+### Tests
 
 ```powershell
 pip install -r requirements-dev.txt
@@ -166,6 +195,7 @@ This project asks: *Can a small, transparent RAG pipeline deliver fast, analyst-
 ![Groq](https://img.shields.io/badge/Groq-LLM-orange?style=for-the-badge)
 ![Ollama](https://img.shields.io/badge/Ollama-local-black?style=for-the-badge)
 ![Pydantic](https://img.shields.io/badge/Pydantic-v2-E92063?style=for-the-badge&logo=pydantic&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![GitHub Actions](https://img.shields.io/badge/CI-GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)
 
 | Layer | Local development | Cloud deployment |
@@ -176,8 +206,9 @@ This project asks: *Can a small, transparent RAG pipeline deliver fast, analyst-
 | **Embeddings** | Ollama `nomic-embed-text` | HuggingFace `nomic-ai/nomic-embed-text-v1` (pinned revision) |
 | **Vector store** | FAISS (committed index) | FAISS (committed index) |
 | **Config** | Pydantic Settings + `.env` | Streamlit Secrets + env |
+| **Container** | Docker / docker-compose | — |
 | **Tests** | pytest (49 tests) | Same pipeline via `validation_matrix.py` |
-| **CI** | GitHub Actions on push/PR | — |
+| **CI** | GitHub Actions (pytest + Docker) | — |
 
 ---
 
@@ -230,60 +261,28 @@ The codebase supports *optional* CVE detail enrichment via the [NIST NVD API](ht
 
 ---
 
+<a id="version-history"></a>
+
+## 📌 Version history
+
+| Version | Highlights | Release |
+|---------|------|------------|
+| **[v1.1.0](https://github.com/rvong65/threat-intelligence-assistant/releases/tag/v1.1.0)** | Docker + compose, architecture docs, SVG assets, CHANGELOG, Docker CI | [Releases](https://github.com/rvong65/threat-intelligence-assistant/releases) · [CHANGELOG](CHANGELOG.md#110---2026-06-23) |
+| **[v1.0.0](https://github.com/rvong65/threat-intelligence-assistant/releases/tag/v1.0.0)** | First tagged release — RAG MVP live on Streamlit Cloud (public since 2026-06-12) | Public since 2026-06-12; tagged 2026-06-18 · [CHANGELOG](CHANGELOG.md#100---2026-06-18) |
+
+Full notes: [CHANGELOG.md](CHANGELOG.md)
+
+---
+
 <a id="architecture-design-choices"></a>
 
 ## 🏗️ Architecture & Design Choices
 
-High-level request flow — presentation, RAG orchestration, retrieval, and model providers:
+MITRE and KEV source data flows through **ingest → chunk → embed → FAISS**, then at query time through **guard → hybrid retrieve → abstention → grounded LLM → citation validation → Streamlit chat** (sidebar confidence, sources, and export-ready citations). Mandatory citations, transparent confidence, and hard abstention keep output analyst-ready without unconstrained open-web generation.
 
-```mermaid
-flowchart TB
-    subgraph Client["Client Layer"]
-        U[Analyst / Demo user]
-        UI[Streamlit UI<br/>app.py]
-    end
+**Full design** — goals, end-to-end diagram, module map, deployment topologies (local / Docker / Streamlit Cloud), and architecture-level safety: **[docs/architecture.md](docs/architecture.md)**
 
-    subgraph App["Application Layer — src/rag/"]
-        QG[Query guard<br/>scope & intent]
-        MEM[Conversation memory<br/>last N turns]
-        RW[Follow-up rewrite<br/>optional LLM/heuristic]
-        RET[Hybrid retriever<br/>FAISS + entity ID boost]
-        ABS[Abstention gate<br/>pre/post generation]
-        GEN[Grounded generation<br/>mandatory citations]
-        VAL[Citation validation<br/>+ confidence score]
-    end
-
-    subgraph Data["Data Layer"]
-        FAISS[(FAISS index<br/>indices/faiss_index)]
-        MITRE[MITRE ATT&CK STIX/JSON]
-        KEV[CISA KEV CSV]
-    end
-
-    subgraph Models["Model Layer"]
-        EMB[Embedding model<br/>Ollama or HuggingFace]
-        LLM[Chat model<br/>Ollama or Groq]
-    end
-
-    U --> UI
-    UI --> QG
-    QG -->|in scope| MEM
-    MEM --> RW
-    RW --> RET
-    RET --> EMB
-    EMB --> FAISS
-    FAISS --> RET
-    RET --> ABS
-    ABS -->|pass| GEN
-    GEN --> LLM
-    LLM --> VAL
-    VAL --> UI
-    QG -->|out of scope| UI
-    ABS -->|abstain| UI
-    MITRE -. ingest .-> FAISS
-    KEV -. ingest .-> FAISS
-```
-
-**Key design decisions:**
+**Key design decisions**
 
 | Decision | Rationale |
 |----------|-----------|
@@ -292,11 +291,13 @@ flowchart TB
 | **Hard abstention** | Prefer no answer over a plausible hallucination when retrieval confidence is low |
 | **Citation validation post-LLM** | Flag IDs cited but not present in retrieved chunks (visible G0007 limitation on long group lists) |
 | **Dual deployment profile** | `DEPLOYMENT_PROFILE=local\|cloud` switches LLM/embedding providers without code changes |
-| **Pinned HF embed revision** | Avoid silently executing new remote modeling code on each cold start |
+| **Reproducibility** | Committed index + Docker image for one-command local/cloud-profile runs |
 
 <a id="development-journey"></a>
 
 ### Development Journey
+
+Build timeline and deployment details: [docs/architecture.md#development-journey](docs/architecture.md#development-journey).
 
 ```mermaid
 flowchart LR
@@ -309,6 +310,7 @@ flowchart LR
     G --> H[Validation matrix<br/>11 PASS / 1 WARN / 0 FAIL]
     H --> I[GitHub + Streamlit deploy]
     I --> J[CI pipeline<br/>GitHub Actions pytest]
+    J --> K[v1.1 maturity<br/>Docker · docs · assets]
 ```
 
 ---
@@ -327,9 +329,9 @@ This is a **decision-support** tool, not autonomous threat hunting or incident r
 | **Scope control** | Query guard rejects non–threat-intel prompts |
 | **Transparency** | Sidebar shows retrieved chunks, distances, and confidence formula |
 | **Privacy (cloud)** | Questions + retrieved context sent to Groq for inference; no user API keys |
-| **Known gap** | Long group technique lists vs top-k chunks → citation warnings (documented, v1.1 target) |
+| **Known gap** | Long group technique lists vs top-k chunks → citation warnings (documented limitation) |
 
-Always verify critical findings against primary MITRE / NVD / vendor sources.
+Always verify critical findings against primary MITRE / NVD / vendor sources. Architecture-level safety: [docs/architecture.md#security-and-safety-architecture-level](docs/architecture.md#security-and-safety-architecture-level).
 
 ---
 
@@ -339,16 +341,18 @@ Always verify critical findings against primary MITRE / NVD / vendor sources.
 
 **GitHub Actions** runs on every push and pull request to `main` / `master`:
 
-| Step | Action |
-|------|--------|
-| **Trigger** | Push or PR to `main` / `master` |
-| **Environment** | `ubuntu-latest`, Python 3.11 |
-| **Install** | `pip install -r requirements-dev.txt` |
-| **Test** | `pytest tests/ -q` |
+| Job | Step | Action |
+|-----|------|--------|
+| **pytest** | Trigger | Push or PR to `main` / `master` |
+| | Environment | `ubuntu-latest`, Python 3.11 |
+| | Install | `pip install -r requirements-dev.txt` |
+| | Test | `pytest tests/ -q` |
+| **docker** | Build | `docker build -t threat-intel-assistant:ci .` |
+| | Health | Streamlit `/_stcore/health` on port 8501 |
 
 Workflow file: [`.github/workflows/tests.yml`](.github/workflows/tests.yml)
 
-Loader and unit tests use **fixtures** or skip when `data/raw/` is absent (e.g. full MITRE corpus groups/software loader). FAISS retriever integration runs against the **committed index** in CI using lightweight fake query embeddings for entity-ID coverage; semantic KEV ranking tests run locally with real embedding models. **`smoke_test.py`** and **`validation_matrix.py`** are maintainer scripts (require API keys / Ollama) and are not part of the CI workflow.
+Loader and unit tests use **fixtures** or skip when `data/raw/` is absent. FAISS retriever integration runs against the **committed index** in CI using lightweight fake query embeddings for entity-ID coverage; semantic KEV ranking tests run locally with real embedding models. **`smoke_test.py`** and **`validation_matrix.py`** are maintainer scripts (require API keys / Ollama) and are not part of the CI workflow.
 
 **Streamlit Cloud** deploys independently from the `main` branch when connected to this repository (`app.py` + `requirements.txt`).
 
@@ -359,7 +363,7 @@ Loader and unit tests use **fixtures** or skip when `data/raw/` is absent (e.g. 
 ## 📈 Project Status & Build Log
 
 | Step | Focus | Status |
-|------|-------|------|
+|------|-------|--------|
 | **1** | Data ingestion — MITRE ATT&CK, CISA KEV, groups & software loaders | ✅ |
 | **2** | RAG pipeline — FAISS index, retrieval, citations, confidence scoring | ✅ |
 | **3** | Streamlit UI — chat, sidebar sources, conversational memory | ✅ |
@@ -368,8 +372,9 @@ Loader and unit tests use **fixtures** or skip when `data/raw/` is absent (e.g. 
 | **6** | Cloud integration — Groq LLM, HuggingFace embeddings, error UX | ✅ |
 | **7** | Validation & deploy — matrix baseline, GitHub repo, Streamlit Cloud | ✅ |
 | **8** | CI — GitHub Actions pytest workflow on push/PR | ✅ |
+| **9** | v1.1 — Docker, architecture docs, assets, CHANGELOG, Docker CI | ✅ |
 
-**Current status:** ✅ MVP complete — live on Streamlit Cloud; CI on `main`
+**Current status:** ✅ v1.1 complete — live on Streamlit Cloud; pytest + Docker CI on `main`
 
 ---
 
@@ -380,13 +385,15 @@ Loader and unit tests use **fixtures** or skip when `data/raw/` is absent (e.g. 
 ```
 threat-intelligence-assistant/
 ├── .github/workflows/
-│   └── tests.yml          # CI: pytest on push/PR
+│   └── tests.yml          # CI: pytest + Docker health check
 ├── .streamlit/
-│   └── config.toml        # Streamlit theme (committed; secrets.toml is gitignored)
+│   └── config.toml        # Streamlit theme (secrets.toml is gitignored)
+├── docs/
+│   ├── architecture.md    # Full system design
+│   ├── assets/            # logo-light/dark, icon, favicon SVGs
+│   └── screenshots/       # README demo images
 ├── app.py                 # Streamlit entry point
 ├── config/                # Pydantic settings, deployment profiles
-├── docs/
-│   └── screenshots/       # README demo images
 ├── src/
 │   ├── embeddings/        # Ollama / HuggingFace embedding factory
 │   ├── ingestion/         # Chunking, normalization
@@ -404,11 +411,14 @@ threat-intelligence-assistant/
 │   └── fixtures/          # Sample MITRE/KEV files for loader tests
 ├── data/raw/              # Gitignored — downloaded at ingest
 ├── data/processed/        # Gitignored — regenerated at ingest
+├── Dockerfile             # Cloud-profile Streamlit image
+├── docker-compose.yml     # app (+ optional Ollama local profile)
+├── .dockerignore
 ├── requirements.txt       # App + Streamlit Cloud runtime deps
 ├── requirements-dev.txt   # Dev deps (includes pytest)
+├── CHANGELOG.md           # Version-by-version change history
 ├── .env.example
-├── .gitignore             # Excludes .env, .venv, data/raw, secrets.toml, etc.
-├── README.md              # Project overview
+├── .gitignore
 └── LICENSE                # MIT
 ```
 
@@ -430,11 +440,14 @@ MITRE ATT&CK ([license](https://github.com/mitre-attack/attack-stix-data?tab=Lic
 
 Open to feedback, suggestions, and mission-aligned collaboration.
 
-**Potential future directions** *(no promises on timeline)*:
+### V2 roadmap (planned)
 
-- Citation validation against full group/software document text (fix G0007-style warnings)
-- Optional NVD enrichment at ingest time (not in default index)
-- Rebuild FAISS index with HuggingFace `search_document:` prefixes (embedding alignment)
-- Voice input / TTS for hands-free analyst queries
+| Area | Direction |
+|------|-----------|
+| **RAG quality** | HF-aligned index rebuild; full-document citation validation (G0007-style fixes) |
+| **Data** | Optional NVD enrichment at ingest; periodic MITRE/KEV refresh workflow |
+| **GenAI / eval** | RAG evaluation in CI (e.g. RAGAS); optional LangSmith tracing |
+| **Product** | FastAPI layer for programmatic access; voice input / TTS for analyst queries |
+| **Ops** | CPU-only Docker image; embedding model pre-cache for faster cold start |
 
 ---
