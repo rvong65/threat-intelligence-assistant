@@ -218,10 +218,8 @@ def _render_sidebar_how_it_works(settings, manifest: dict | None) -> None:
             "from retrieved sources. **Abstention:** weak evidence → no speculative answer."
         )
         if settings.is_cloud():
-            st.markdown(
-                "**Cloud privacy:** your question and retrieved context are sent to "
-                "**Groq** for inference. No API key is required from you — the hosted "
-                "app is configured by the maintainer."
+            st.caption(
+                "Cloud profile: see **Privacy & data** below for where your questions are sent."
             )
             st.caption("If the service is rate-limited, wait a moment and try again.")
         if manifest:
@@ -233,6 +231,39 @@ def _render_sidebar_how_it_works(settings, manifest: dict | None) -> None:
                 f"{counts.get('mitre_software', 0)} software, "
                 f"{counts.get('cisa_kev', 0)} KEV entries."
             )
+
+
+def _render_sidebar_privacy(settings) -> None:
+    """Data-flow disclosure for cloud demo and local/Ollama deployments."""
+    with st.sidebar.expander("Privacy & data", expanded=False):
+        st.markdown(
+            "This app is **decision support**, not a certified data-processing platform. "
+            "Understand where your input may go:"
+        )
+        if settings.is_cloud():
+            st.markdown(
+                "- **Questions & follow-ups** → **Groq** (answer generation)  \n"
+                "- **Query text** → **HuggingFace** (`nomic-embed-text-v1` embeddings)  \n"
+                "- **Retrieved MITRE/KEV chunks** → included in the Groq prompt  \n"
+                "- **Session chat** → Streamlit memory only; not stored in a project database"
+            )
+            st.markdown(
+                "**Public demo:** Do not submit classified data, credentials, PII, or live "
+                "incident details you cannot share with Groq or HuggingFace. Prefer "
+                "example queries or synthetic analyst-style questions."
+            )
+            st.caption("No API key is required from you — the hosted app is configured by the maintainer.")
+        else:
+            st.markdown(
+                "- **LLM answers** → **Ollama** on your network (when configured)  \n"
+                "- **Query embeddings** → Ollama or HuggingFace per your `.env`  \n"
+                "- **Retrieved chunks** → sent to your local LLM only  \n"
+                "- **Session chat** → Streamlit memory only; not stored in a project database"
+            )
+        st.caption(
+            "Streamlit Cloud and cloud API providers may retain operational logs under "
+            "their own policies. Full table: README Privacy & data section on GitHub."
+        )
 
 
 def _render_sidebar_llm_error() -> None:
@@ -458,6 +489,7 @@ def main() -> None:
     )
     _render_sidebar_config(settings)
     _render_sidebar_how_it_works(settings, manifest)
+    _render_sidebar_privacy(settings)
     _render_sidebar_llm_error()
     st.sidebar.divider()
     _render_sidebar_response(st.session_state.last_response)

@@ -216,18 +216,21 @@ flowchart LR
 | **Overconfident wrong answers** | Confidence score + hard abstention below threshold |
 | **Off-topic / abuse** | Query guard before retrieval and LLM calls |
 | **API key exposure** | `.env` and `secrets.toml` gitignored; Groq key only in Streamlit Secrets / env |
-| **Cloud inference privacy** | Questions + retrieved context sent to Groq; documented in UI “How it works” |
+| **Cloud inference privacy** | Questions + retrieved MITRE/KEV context sent to Groq; query embeddings via HuggingFace on cloud profile — see README [Privacy & data](../README.md#privacy-data) |
 | **Deserialization risk** | FAISS `allow_dangerous_deserialization=True` only for maintainer-built index in repo |
 | **Decision support only** | Not autonomous IR or threat hunting; verify against primary sources |
+
+**Privacy:** Question text and retrieved MITRE/KEV context are transmitted to configured LLM and embedding APIs (Groq, HuggingFace, or local Ollama). This app does not persist queries to a project database; see README [Privacy & data](../README.md#privacy-data).
 
 ---
 
 ## Version
 
-Document version: v1.1.0 (aligned with [CHANGELOG.md](../CHANGELOG.md#110---2026-06-23))
+Document version: v1.1.1 (aligned with [CHANGELOG.md](../CHANGELOG.md#111---2026-06-23))
 
 | Release | Architecture highlights |
 |---------|------------|
+| **v1.1.1** | Privacy & data disclosures — README Safety section, Streamlit sidebar expander |
 | **v1.1.0** | Engineering maturity — Docker, `docs/architecture.md`, SVG assets, CHANGELOG, Docker CI |
 | **v1.0.0** | RAG MVP — MITRE + KEV index, Streamlit Cloud, Groq cloud profile, pytest CI |
 

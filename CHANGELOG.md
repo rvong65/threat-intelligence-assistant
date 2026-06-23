@@ -4,6 +4,13 @@ All notable changes to this project are documented in this file.
 
 Release dates reflect when a version was tagged on GitHub (Release), not necessarily when the repo first went public or when each feature was first committed.
 
+## [1.1.1] - 2026-06-23
+
+### Added
+
+- **Privacy & data** disclosures in README (Safety section) and Streamlit sidebar expander
+- Live Demo privacy note for public Groq-based Streamlit Cloud demo
+
 ## [1.1.0] - 2026-06-23
 
 ### Added
@@ -41,5 +48,6 @@ First **tagged** release. The repository and Streamlit app were **public since 2
 - pytest suite (49 tests) and `validation_matrix.py` (11 PASS / 1 WARN / 0 FAIL on cloud)
 
 
+[1.1.1]: https://github.com/rvong65/threat-intelligence-assistant/releases/tag/v1.1.1
 [1.1.0]: https://github.com/rvong65/threat-intelligence-assistant/releases/tag/v1.1.0
 [1.0.0]: https://github.com/rvong65/threat-intelligence-assistant/releases/tag/v1.0.0

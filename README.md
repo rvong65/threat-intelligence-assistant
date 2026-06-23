@@ -8,9 +8,13 @@
 [![Release](https://img.shields.io/github/v/release/rvong65/threat-intelligence-assistant?label=release)](https://github.com/rvong65/threat-intelligence-assistant/releases)
 [![CI](https://github.com/rvong65/threat-intelligence-assistant/actions/workflows/tests.yml/badge.svg)](https://github.com/rvong65/threat-intelligence-assistant/actions/workflows/tests.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Docker](https://img.shields.io/badge/Docker-Groq%20%7C%20Ollama-2496ED?style=flat-square&logo=docker&logoColor=white)](https://github.com/rvong65/threat-intelligence-assistant#docker)
+[![RAG](https://img.shields.io/badge/RAG-Grounded%20Citations-1f77b4?style=flat-square&logo=langchain&logoColor=white)](https://github.com/rvong65/threat-intelligence-assistant#features)
 [![Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://threat-intelligence-rag-assistant.streamlit.app/)
 
 A **retrieval-augmented generation (RAG)** chat application that helps security analysts explore **MITRE ATT&CK** and **CISA Known Exploited Vulnerabilities (KEV)** with **grounded, cited, explainable** answers — not open-web speculation.
+
+> **Privacy (cloud demo):** When you ask a question, the text you submit is sent to **third-party services** (Groq for answer generation; HuggingFace for query embeddings on the public demo). Do not enter classified material, credentials, or live incident details you cannot share with external APIs. See [Privacy & data handling](#privacy-data).
 
 ---
 
@@ -32,7 +36,7 @@ A **retrieval-augmented generation (RAG)** chat application that helps security 
 | 🏗️ [Architecture & Design Choices](#architecture-design-choices) | System design summary |
 | ↳ [Full architecture doc](docs/architecture.md) | Detailed system design (Mermaid) |
 | ↳ [Development Journey](#development-journey) | Build timeline diagram |
-| 🛡️ [Safety Considerations](#safety-considerations) | Ethics and guardrails |
+| 🛡️ [Safety Considerations](#safety-considerations) | Ethics, guardrails, and data privacy |
 | 🔄 [CI/CD](#cicd) | GitHub Actions, Docker CI, Streamlit deploy |
 | 📈 [Project Status & Build Log](#project-status) | Milestone checklist |
 | 📁 [Repository Layout](#repository-layout) | File tree |
@@ -52,6 +56,7 @@ A **retrieval-augmented generation (RAG)** chat application that helps security 
 
 **Before you open the app:**
 - **Cold start:** This app runs on Streamlit Community Cloud and may go to sleep after inactivity. If you see **“Zzzz — This app has gone to sleep due to inactivity”**, click **“Yes, get this app back up!”** to wake it — anyone can do this; you don’t need to contact the maintainer. Startup may take a minute after you click.
+- **Privacy:** The public demo uses a **cloud LLM (Groq)** and **HuggingFace embeddings**. Text you submit leaves your browser for the hosted app and is forwarded to those providers along with retrieved MITRE/KEV context. Use **general or synthetic threat-intel questions only** — not classified data, credentials, or live incident details you cannot share externally. See [Privacy & data handling](#privacy-data).
 
 **Screenshot:**
 
@@ -267,7 +272,8 @@ The codebase supports *optional* CVE detail enrichment via the [NIST NVD API](ht
 
 | Version | Highlights | Release |
 |---------|------|------------|
-| **[v1.1.0](https://github.com/rvong65/threat-intelligence-assistant/releases/tag/v1.1.0)** | Docker + compose, architecture docs, SVG assets, CHANGELOG, Docker CI | [Releases](https://github.com/rvong65/threat-intelligence-assistant/releases) · [CHANGELOG](CHANGELOG.md#110---2026-06-23) |
+| **[v1.1.1](https://github.com/rvong65/threat-intelligence-assistant/releases/tag/v1.1.1)** | Privacy & data disclosures (README + Streamlit sidebar) | [Releases](https://github.com/rvong65/threat-intelligence-assistant/releases/tag/v1.1.1) · [CHANGELOG](CHANGELOG.md#111---2026-06-23) |
+| **[v1.1.0](https://github.com/rvong65/threat-intelligence-assistant/releases/tag/v1.1.0)** | Docker + compose, architecture docs, SVG assets, CHANGELOG, Docker CI | [Releases](https://github.com/rvong65/threat-intelligence-assistant/releases/tag/v1.1.0) · [CHANGELOG](CHANGELOG.md#110---2026-06-23) |
 | **[v1.0.0](https://github.com/rvong65/threat-intelligence-assistant/releases/tag/v1.0.0)** | First tagged release — RAG MVP live on Streamlit Cloud (public since 2026-06-12) | Public since 2026-06-12; tagged 2026-06-18 · [CHANGELOG](CHANGELOG.md#100---2026-06-18) |
 
 Full notes: [CHANGELOG.md](CHANGELOG.md)
@@ -328,10 +334,31 @@ This is a **decision-support** tool, not autonomous threat hunting or incident r
 | **Humility** | Low confidence → disclaimer or hard abstention |
 | **Scope control** | Query guard rejects non–threat-intel prompts |
 | **Transparency** | Sidebar shows retrieved chunks, distances, and confidence formula |
-| **Privacy (cloud)** | Questions + retrieved context sent to Groq for inference; no user API keys |
+| **Privacy (cloud)** | Questions + retrieved MITRE/KEV context sent to Groq; query embeddings via HuggingFace — see [Privacy & data](#privacy-data) |
 | **Known gap** | Long group technique lists vs top-k chunks → citation warnings (documented limitation) |
 
 Always verify critical findings against primary MITRE / NVD / vendor sources. Architecture-level safety: [docs/architecture.md#security-and-safety-architecture-level](docs/architecture.md#security-and-safety-architecture-level).
+
+<a id="privacy-data"></a>
+
+### Privacy & data handling
+
+Threat Intelligence Assistant is designed for **decision support**, not as a certified data-processing platform. Understand where your input goes:
+
+| Data you submit | Where it may be sent | Notes |
+|-----------------|----------------------|-------|
+| Questions & follow-ups | **LLM provider** (Groq on cloud demo, or local Ollama) | Cloud: processed per [Groq Terms](https://groq.com/terms/) and their privacy policy |
+| Query text (retrieval) | **Embedding provider** (HuggingFace `nomic-embed-text-v1` on cloud; Ollama locally) | Cloud cold start downloads the HF model on first query |
+| Retrieved MITRE/KEV chunks | **Same LLM provider** | Grounding context from the committed FAISS index is included in the Groq/Ollama prompt |
+| Multi-turn memory | **Same LLM provider** | Recent turns in the session may be included for follow-up questions |
+| Session chat history | **Streamlit session memory** | Cleared when the session ends; **not** written to a project database by this app |
+| Sidebar exports / citations | Your browser only | Links point to public MITRE / NVD / CISA pages |
+
+**Public Streamlit Cloud demo:** Treat it like any shared SaaS chat UI — **no classified data, credentials, PII, or live production incident details** you cannot share with Groq or HuggingFace. Prefer the built-in **example queries** or synthetic analyst-style questions for testing.
+
+**Sensitive environments:** Run locally or in Docker with **`DEPLOYMENT_PROFILE=local`** and **`LLM_PROVIDER=ollama`** so answer generation stays on your network. Query embeddings can also use Ollama (`EMBEDDING_PROVIDER=ollama`); HuggingFace is not required on that profile.
+
+**Maintainer:** This repo does not intentionally log chat content to disk. Streamlit Community Cloud, Groq, and HuggingFace may retain operational or API logs under their own policies — review their documentation if compliance matters.
 
 ---
 
@@ -373,8 +400,9 @@ Loader and unit tests use **fixtures** or skip when `data/raw/` is absent. FAISS
 | **7** | Validation & deploy — matrix baseline, GitHub repo, Streamlit Cloud | ✅ |
 | **8** | CI — GitHub Actions pytest workflow on push/PR | ✅ |
 | **9** | v1.1 — Docker, architecture docs, assets, CHANGELOG, Docker CI | ✅ |
+| **10** | v1.1.1 — Privacy & data disclosures (README + Streamlit sidebar) | ✅ |
 
-**Current status:** ✅ v1.1 complete — live on Streamlit Cloud; pytest + Docker CI on `main`
+**Current status:** ✅ v1.1.1 — MVP + packaging + privacy disclosures
 
 ---
 
