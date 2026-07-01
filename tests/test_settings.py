@@ -21,6 +21,7 @@ from config.settings import (
 @pytest.mark.parametrize(
     ("model", "expected"),
     [
+        ("openai/gpt-oss-20b", True),
         ("llama-3.1-8b-instant", True),
         ("llama-3.3-70b-versatile", True),
         ("meta-llama/llama-4-scout-17b-16e-instruct", True),
@@ -43,6 +44,7 @@ def test_default_settings_target_cloud_deploy() -> None:
 
 def test_cloud_profile_defaults_to_groq_and_hf() -> None:
     settings = Settings(
+        _env_file=None,
         deployment_profile=DeploymentProfile.CLOUD,
         llm_provider=LLMProvider.OLLAMA,
         embedding_provider=EmbeddingProvider.OLLAMA,
@@ -62,13 +64,22 @@ def test_groq_provider_normalizes_ollama_model_name() -> None:
     assert settings.llm_model == GROQ_DEFAULT_LLM_MODEL
 
 
-def test_groq_provider_keeps_explicit_groq_model() -> None:
+def test_groq_migrates_deprecated_llama_70b_versatile() -> None:
     settings = Settings(
-        deployment_profile=DeploymentProfile.LOCAL,
+        _env_file=None,
         llm_provider=LLMProvider.GROQ,
         llm_model="llama-3.3-70b-versatile",
     )
-    assert settings.llm_model == "llama-3.3-70b-versatile"
+    assert settings.llm_model == "openai/gpt-oss-120b"
+
+
+def test_groq_migrates_deprecated_llama_8b_instant() -> None:
+    settings = Settings(
+        _env_file=None,
+        llm_provider=LLMProvider.GROQ,
+        llm_model="llama-3.1-8b-instant",
+    )
+    assert settings.llm_model == GROQ_DEFAULT_LLM_MODEL
 
 
 def test_llm_rewrite_followups_respects_explicit_env() -> None:

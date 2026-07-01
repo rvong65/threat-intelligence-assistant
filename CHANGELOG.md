@@ -4,6 +4,19 @@ All notable changes to this project are documented in this file.
 
 Release dates reflect when a version was tagged on GitHub (Release), not necessarily when the repo first went public or when each feature was first committed.
 
+## [1.1.2] - 2026-07-01
+
+### Added
+
+- **Retrieval-only fallback** — when LLM generation fails after successful retrieval, return formatted MITRE/KEV sources without synthesis (`RETRIEVAL_ONLY_FALLBACK`, default `true`)
+- **RAG integration tests** — full `chain.invoke` coverage for answer, sources, and confidence (CI: mocked LLM; optional live Groq when `GROQ_API_KEY` set)
+- Streamlit sidebar warning and toast for degraded retrieval-only mode
+
+### Changed
+
+- **Groq cloud default** migrated from deprecated `llama-3.1-8b-instant` to `openai/gpt-oss-20b` (auto-migrates legacy 8b and 70b model IDs in settings)
+- Clearer Groq 404 / model-unavailable error mapping in `src/llm/errors.py`
+
 ## [1.1.1] - 2026-06-23
 
 ### Added
@@ -48,6 +61,7 @@ First **tagged** release. The repository and Streamlit app were **public since 2
 - pytest suite (49 tests) and `validation_matrix.py` (11 PASS / 1 WARN / 0 FAIL on cloud)
 
 
+[1.1.2]: https://github.com/rvong65/threat-intelligence-assistant/releases/tag/v1.1.2
 [1.1.1]: https://github.com/rvong65/threat-intelligence-assistant/releases/tag/v1.1.1
 [1.1.0]: https://github.com/rvong65/threat-intelligence-assistant/releases/tag/v1.1.0
 [1.0.0]: https://github.com/rvong65/threat-intelligence-assistant/releases/tag/v1.0.0

@@ -14,7 +14,7 @@ services:
     environment:
       DEPLOYMENT_PROFILE: cloud
       LLM_PROVIDER: groq
-      LLM_MODEL: llama-3.1-8b-instant
+      LLM_MODEL: openai/gpt-oss-20b
       EMBEDDING_PROVIDER: huggingface
       HUGGINGFACE_EMBEDDING_MODEL: nomic-ai/nomic-embed-text-v1
       HUGGINGFACE_EMBEDDING_REVISION: 3ac47f125a41961d13b397d0332866be2f9152e1

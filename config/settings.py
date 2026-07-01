@@ -15,7 +15,12 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 # Default chat models per provider (Groq uses API model IDs, not Ollama tags).
 OLLAMA_DEFAULT_LLM_MODEL = "gemma3:4b"
-GROQ_DEFAULT_LLM_MODEL = "llama-3.1-8b-instant"
+GROQ_DEFAULT_LLM_MODEL = "openai/gpt-oss-20b"
+# Groq shutdown 2026-08-16 — auto-migrate legacy IDs when still configured.
+GROQ_DEPRECATED_LLM_MODELS: dict[str, str] = {
+    "llama-3.1-8b-instant": "openai/gpt-oss-20b",
+    "llama-3.3-70b-versatile": "openai/gpt-oss-120b",
+}
 # Pin HF embed model to a fixed commit (avoids re-downloading new remote code).
 HUGGINGFACE_NOMIC_EMBED_REVISION = "3ac47f125a41961d13b397d0332866be2f9152e1"
 
@@ -25,7 +30,12 @@ def is_groq_chat_model(model: str) -> bool:
     normalized = model.strip().lower()
     if not normalized:
         return False
-    if normalized in {GROQ_DEFAULT_LLM_MODEL, "llama-3.3-70b-versatile"}:
+    if normalized in {
+        GROQ_DEFAULT_LLM_MODEL,
+        "openai/gpt-oss-120b",
+        "llama-3.1-8b-instant",
+        "llama-3.3-70b-versatile",
+    }:
         return True
     return (
         "instant" in normalized
@@ -94,6 +104,9 @@ class Settings(BaseSettings):
     retrieval_top_k: int = Field(default=5, ge=1, le=20)
     confidence_threshold: int = Field(default=40, ge=0, le=100)
     hard_abstention_enabled: bool = Field(default=True, validation_alias="HARD_ABSTENTION_ENABLED")
+    retrieval_only_fallback_enabled: bool = Field(
+        default=True, validation_alias="RETRIEVAL_ONLY_FALLBACK"
+    )
     llm_rewrite_followups: bool = Field(default=False, validation_alias="LLM_REWRITE_FOLLOWUPS")
     include_groups_software: bool = Field(default=True, validation_alias="INCLUDE_GROUPS_SOFTWARE")
     nvd_enrich_limit: int = Field(default=100, ge=0, le=2000)
@@ -160,10 +173,11 @@ class Settings(BaseSettings):
             if "LLM_REWRITE_FOLLOWUPS" not in os.environ:
                 self.llm_rewrite_followups = False
 
-        if self.llm_provider == LLMProvider.GROQ and not is_groq_chat_model(
-            self.llm_model
-        ):
-            self.llm_model = GROQ_DEFAULT_LLM_MODEL
+        if self.llm_provider == LLMProvider.GROQ:
+            if self.llm_model in GROQ_DEPRECATED_LLM_MODELS:
+                self.llm_model = GROQ_DEPRECATED_LLM_MODELS[self.llm_model]
+            elif not is_groq_chat_model(self.llm_model):
+                self.llm_model = GROQ_DEFAULT_LLM_MODEL
 
         return self
 

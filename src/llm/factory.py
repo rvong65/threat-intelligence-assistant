@@ -18,7 +18,7 @@ def get_llm(settings: Settings | None = None) -> BaseChatModel:
     Return a LangChain chat model based on configuration.
 
     Local default: Ollama gemma3:4b
-    Cloud default: Groq llama-3.1-8b-instant (via apply_deployment_defaults)
+    Cloud default: Groq openai/gpt-oss-20b (via apply_deployment_defaults)
     """
     settings = settings or get_settings()
 

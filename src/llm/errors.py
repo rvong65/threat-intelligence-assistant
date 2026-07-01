@@ -54,12 +54,21 @@ def map_llm_exception(exc: BaseException) -> LLMUserError:
             ),
         )
 
-    if isinstance(exc, APIStatusError) and getattr(exc, "status_code", 0) >= 500:
-        return LLMUserError(
-            user_message=(
-                "**Groq is temporarily unavailable.** Please try again in a few moments."
-            ),
-        )
+    if isinstance(exc, APIStatusError):
+        status_code = getattr(exc, "status_code", 0)
+        if status_code == 404:
+            return LLMUserError(
+                user_message=(
+                    "**Configured language model is unavailable.** "
+                    "The maintainer may need to update the model ID."
+                ),
+            )
+        if status_code >= 500:
+            return LLMUserError(
+                user_message=(
+                    "**Groq is temporarily unavailable.** Please try again in a few moments."
+                ),
+            )
 
     status_code = getattr(exc, "status_code", None)
     if status_code == 429:

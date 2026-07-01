@@ -358,6 +358,11 @@ def _render_sidebar_response(response: RAGResponse | None) -> None:
         st.sidebar.info("Out-of-scope query — no retrieval or confidence scoring.")
         return
 
+    if _response_flag(response, "degraded_retrieval_only"):
+        st.sidebar.warning(
+            "Retrieval-only mode — LLM unavailable; showing sources without synthesis."
+        )
+
     confidence = response.confidence
     st.sidebar.progress(confidence.overall / 100, text=f"Confidence: {confidence.overall}/100")
     if confidence.is_low_confidence:
@@ -406,6 +411,11 @@ def _process_prompt(chain: ThreatIntelRAGChain, prompt: str) -> None:
         response = chain.invoke(prompt)
         st.session_state.last_response = response
         assistant_text = response.answer
+        if _response_flag(response, "degraded_retrieval_only"):
+            st.toast(
+                "Showing retrieved sources only — LLM temporarily unavailable.",
+                icon="ℹ️",
+            )
         if (
             response.confidence
             and not response.is_abstention

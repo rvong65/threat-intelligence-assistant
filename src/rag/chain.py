@@ -10,7 +10,7 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from config.settings import Settings, get_settings
-from src.llm.errors import invoke_llm
+from src.llm.errors import LLMUserError, invoke_llm
 from src.rag.citations import CitationValidation, validate_citations
 from src.rag.confidence import (
     ConfidenceBreakdown,
@@ -21,6 +21,7 @@ from src.rag.llm_rewrite import rewrite_followup_with_llm
 from src.rag.memory import ConversationMemory, rewrite_followup
 from src.rag.prompts import build_prompt_messages
 from src.rag.query_guard import is_threat_intel_query, out_of_scope_message
+from src.rag.retrieval_fallback import format_retrieval_only_answer
 from src.rag.retriever import RetrievedChunk, retrieve
 
 logger = logging.getLogger(__name__)
@@ -53,6 +54,7 @@ class RAGResponse:
     disclaimer: str = ""
     hard_abstained: bool = False
     out_of_scope: bool = False
+    degraded_retrieval_only: bool = False
 
     @property
     def is_abstention(self) -> bool:
@@ -81,6 +83,29 @@ def _abstention_response(
         citations=citations,
         retrieval_query=retrieval_query,
         hard_abstained=hard,
+    )
+
+
+def _retrieval_only_response(
+    question: str,
+    retrieval_query: str,
+    chunks: list[RetrievedChunk],
+    *,
+    threshold: int = 40,
+) -> RAGResponse:
+    """Degraded answer: formatted retrieved sources when LLM generation fails."""
+    answer = format_retrieval_only_answer(question, chunks)
+    citations = validate_citations("", chunks)
+    confidence = compute_confidence(chunks, [], [], threshold)
+    return RAGResponse(
+        question=question,
+        answer=answer,
+        raw_answer=answer,
+        chunks=chunks,
+        confidence=confidence,
+        citations=citations,
+        retrieval_query=retrieval_query,
+        degraded_retrieval_only=True,
     )
 
 
@@ -158,7 +183,18 @@ class ThreatIntelRAGChain:
                 lc_messages.append(HumanMessage(content=content))
 
         logger.info("Invoking LLM for question: %s", question[:80])
-        response = invoke_llm(self.llm, lc_messages)
+        try:
+            response = invoke_llm(self.llm, lc_messages)
+        except LLMUserError:
+            if self.settings.retrieval_only_fallback_enabled and chunks:
+                logger.warning(
+                    "LLM failed after retrieval — returning retrieval-only fallback: %s",
+                    question[:80],
+                )
+                return _retrieval_only_response(
+                    question, retrieval_query, chunks, threshold=threshold
+                )
+            raise
         raw_answer = str(response.content).strip()
 
         citation_result = validate_citations(raw_answer, chunks)

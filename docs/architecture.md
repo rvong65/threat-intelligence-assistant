@@ -75,8 +75,9 @@ flowchart TB
 5. **Retriever** embeds the query, searches FAISS, applies entity-ID lookup and boosts.
 6. **Abstention** checks retrieval confidence against threshold (default 40).
 7. **LLM** generates an answer grounded in retrieved chunks with required citations.
-8. **Citation validation** flags IDs cited but not present in retrieved `source_id` set.
-9. **Confidence** blends retrieval, coverage, and citation match; UI shows breakdown.
+8. **Retrieval-only fallback** (if LLM fails after step 5): formatted MITRE/KEV sources without synthesis (`RETRIEVAL_ONLY_FALLBACK`, default on).
+9. **Citation validation** flags IDs cited but not present in retrieved `source_id` set.
+10. **Confidence** blends retrieval, coverage, and citation match; UI shows breakdown.
 
 ---
 
@@ -92,6 +93,7 @@ flowchart TB
 | [`src/llm/factory.py`](../src/llm/factory.py) | Ollama or Groq chat models; error mapping |
 | [`src/vectorstore/factory.py`](../src/vectorstore/factory.py) | Build/load FAISS index, manifest |
 | [`src/rag/chain.py`](../src/rag/chain.py) | RAG orchestration: guard → retrieve → generate → validate |
+| [`src/rag/retrieval_fallback.py`](../src/rag/retrieval_fallback.py) | Template formatter for degraded retrieval-only answers when LLM fails |
 | [`src/rag/retriever.py`](../src/rag/retriever.py) | Hybrid retrieval, entity boost, KEV re-ranking |
 | [`src/rag/citations.py`](../src/rag/citations.py) | Extract and validate cited IDs |
 | [`src/rag/confidence.py`](../src/rag/confidence.py) | Weighted confidence score |
@@ -99,7 +101,7 @@ flowchart TB
 | [`scripts/ingest.py`](../scripts/ingest.py) | Download raw data, build FAISS index |
 | [`scripts/validation_matrix.py`](../scripts/validation_matrix.py) | 12-case inspector-style evaluation (maintainer) |
 | [`indices/faiss_index/`](../indices/faiss_index/) | Committed vectors + `manifest.json` |
-| [`tests/`](../tests/) | pytest suite (49 tests) |
+| [`tests/`](../tests/) | pytest suite (60 tests) |
 
 ---
 
@@ -126,6 +128,7 @@ User question
   → FAISS similarity + entity docstore lookup + boosts
   → abstention gate
   → Groq / Ollama LLM (retrieved context only)
+  → on LLM failure: retrieval-only fallback (formatted sources)
   → citation validation + confidence
   → Streamlit UI
 ```
@@ -145,6 +148,7 @@ User question
 | **Dual deployment profile** | `DEPLOYMENT_PROFILE=local\|cloud` switches LLM/embedding providers without code changes |
 | **Pinned HF embed revision** | Avoid silently executing new remote modeling code on each cold start |
 | **Factory pattern for LLM/embeddings** | Swap Ollama ↔ Groq / HuggingFace via settings only |
+| **Retrieval-only fallback** | If cloud LLM is down or deprecated, users still get MITRE/KEV sources from the index |
 | **pytest + validation matrix** | Unit tests in CI; inspector matrix for maintainer Groq/Ollama validation |
 
 **Known limitation:** Index vectors were built with Ollama `nomic-embed-text`; cloud queries use HuggingFace `nomic-ai/nomic-embed-text-v1`. Same model family, not identical embedding space. A future release may rebuild with HF `search_document:` / `search_query:` prefixes.
@@ -217,6 +221,7 @@ flowchart LR
 | **Off-topic / abuse** | Query guard before retrieval and LLM calls |
 | **API key exposure** | `.env` and `secrets.toml` gitignored; Groq key only in Streamlit Secrets / env |
 | **Cloud inference privacy** | Questions + retrieved MITRE/KEV context sent to Groq; query embeddings via HuggingFace on cloud profile — see README [Privacy & data](../README.md#privacy-data) |
+| **Cloud LLM deprecation / outage** | Default `openai/gpt-oss-20b`; auto-migrate legacy `llama-3.1-8b-instant` → 20b and `llama-3.3-70b-versatile` → `openai/gpt-oss-120b`; retrieval-only fallback when generation fails after retrieve |
 | **Deserialization risk** | FAISS `allow_dangerous_deserialization=True` only for maintainer-built index in repo |
 | **Decision support only** | Not autonomous IR or threat hunting; verify against primary sources |
 
@@ -226,10 +231,11 @@ flowchart LR
 
 ## Version
 
-Document version: v1.1.1 (aligned with [CHANGELOG.md](../CHANGELOG.md#111---2026-06-23))
+Document version: v1.1.2 (aligned with [CHANGELOG.md](../CHANGELOG.md#112---2026-07-01))
 
 | Release | Architecture highlights |
 |---------|------------|
+| **v1.1.2** | Groq `gpt-oss-20b` migration; retrieval-only fallback on LLM failure |
 | **v1.1.1** | Privacy & data disclosures — README Safety section, Streamlit sidebar expander |
 | **v1.1.0** | Engineering maturity — Docker, `docs/architecture.md`, SVG assets, CHANGELOG, Docker CI |
 | **v1.0.0** | RAG MVP — MITRE + KEV index, Streamlit Cloud, Groq cloud profile, pytest CI |

@@ -87,10 +87,10 @@ streamlit run app.py
 - **Admin ingest panel** — local-only corpus validation and index rebuild
 - **Groq error UX** — friendly rate-limit / auth messages (no stack traces in chat)
 
-**Validation baseline (Groq cloud):** 11 PASS · 1 WARN · 0 FAIL across 12 inspector-style cases.  
+**Validation baseline (Groq cloud, `openai/gpt-oss-20b`):** 10 PASS · 2 WARN · 0 FAIL across 12 inspector-style cases.  
 **Known WARN:** group queries like `G0007` may list many techniques while top-k retrieval only validates a subset — answer is useful; citation warnings are expected.
 
-| | Local `gemma3:4b` | Cloud Groq `llama-3.1-8b-instant` |
+| | Local `gemma3:4b` | Cloud Groq `openai/gpt-oss-20b` |
 |--|-------------------|-----------------------------------|
 | Matrix | ~5 PASS / ~7 WARN | **11 PASS / 1 WARN** |
 | Latency | Slower on CPU | Fast (hosted API) |
@@ -207,7 +207,7 @@ This project asks: *Can a small, transparent RAG pipeline deliver fast, analyst-
 |-------|-------------------|------------------|
 | **UI** | Streamlit (`app.py`) | Streamlit Community Cloud |
 | **Orchestration** | LangChain | LangChain |
-| **LLM** | Ollama `gemma3:4b` | Groq `llama-3.1-8b-instant` |
+| **LLM** | Ollama `gemma3:4b` | Groq `openai/gpt-oss-20b` |
 | **Embeddings** | Ollama `nomic-embed-text` | HuggingFace `nomic-ai/nomic-embed-text-v1` (pinned revision) |
 | **Vector store** | FAISS (committed index) | FAISS (committed index) |
 | **Config** | Pydantic Settings + `.env` | Streamlit Secrets + env |
@@ -248,7 +248,7 @@ This project indexes **MITRE ATT&CK Enterprise** STIX data and the **CISA Known 
 | [nomic-ai/nomic-embed-text-v1](https://huggingface.co/nomic-ai/nomic-embed-text-v1) | Cloud query embeddings (Streamlit) | [Apache 2.0](https://huggingface.co/nomic-ai/nomic-embed-text-v1) — see [Nomic Embed technical report (arXiv:2402.01613)](https://arxiv.org/abs/2402.01613) |
 | `nomic-embed-text` (Ollama) | Local index build + local dev embeddings | Same model family as above |
 | `gemma3:4b` (Ollama) | Local dev LLM | [Gemma Terms of Use](https://ai.google.dev/gemma/terms) |
-| `llama-3.1-8b-instant` (Groq) | Cloud demo LLM | Meta Llama via Groq API — [Groq Terms](https://groq.com/terms/) |
+| `openai/gpt-oss-20b` (Groq) | Cloud demo LLM | Open-weight model via Groq API — [Groq Terms](https://groq.com/terms/) |
 
 No affiliation with MITRE, CISA, DHS, Nomic AI, or Groq. Threat intelligence data is used for educational and research purposes. Always verify critical findings against primary sources.
 
@@ -272,6 +272,7 @@ The codebase supports *optional* CVE detail enrichment via the [NIST NVD API](ht
 
 | Version | Highlights | Release |
 |---------|------|------------|
+| **[v1.1.2](https://github.com/rvong65/threat-intelligence-assistant/releases/tag/v1.1.2)** | Groq `gpt-oss-20b` migration + retrieval-only LLM fallback | [CHANGELOG](CHANGELOG.md#112---2026-07-01) |
 | **[v1.1.1](https://github.com/rvong65/threat-intelligence-assistant/releases/tag/v1.1.1)** | Privacy & data disclosures (README + Streamlit sidebar) | [Releases](https://github.com/rvong65/threat-intelligence-assistant/releases/tag/v1.1.1) · [CHANGELOG](CHANGELOG.md#111---2026-06-23) |
 | **[v1.1.0](https://github.com/rvong65/threat-intelligence-assistant/releases/tag/v1.1.0)** | Docker + compose, architecture docs, SVG assets, CHANGELOG, Docker CI | [Releases](https://github.com/rvong65/threat-intelligence-assistant/releases/tag/v1.1.0) · [CHANGELOG](CHANGELOG.md#110---2026-06-23) |
 | **[v1.0.0](https://github.com/rvong65/threat-intelligence-assistant/releases/tag/v1.0.0)** | First tagged release — RAG MVP live on Streamlit Cloud (public since 2026-06-12) | Public since 2026-06-12; tagged 2026-06-18 · [CHANGELOG](CHANGELOG.md#100---2026-06-18) |
@@ -335,6 +336,7 @@ This is a **decision-support** tool, not autonomous threat hunting or incident r
 | **Scope control** | Query guard rejects non–threat-intel prompts |
 | **Transparency** | Sidebar shows retrieved chunks, distances, and confidence formula |
 | **Privacy (cloud)** | Questions + retrieved MITRE/KEV context sent to Groq; query embeddings via HuggingFace — see [Privacy & data](#privacy-data) |
+| **Resilience** | Cloud default `openai/gpt-oss-20b`; if LLM fails after retrieval, **retrieval-only fallback** returns MITRE/KEV sources without synthesis; self-host with Ollama via Docker `local` profile |
 | **Known gap** | Long group technique lists vs top-k chunks → citation warnings (documented limitation) |
 
 Always verify critical findings against primary MITRE / NVD / vendor sources. Architecture-level safety: [docs/architecture.md#security-and-safety-architecture-level](docs/architecture.md#security-and-safety-architecture-level).
@@ -401,8 +403,9 @@ Loader and unit tests use **fixtures** or skip when `data/raw/` is absent. FAISS
 | **8** | CI — GitHub Actions pytest workflow on push/PR | ✅ |
 | **9** | v1.1 — Docker, architecture docs, assets, CHANGELOG, Docker CI | ✅ |
 | **10** | v1.1.1 — Privacy & data disclosures (README + Streamlit sidebar) | ✅ |
+| **11** | v1.1.2 — Groq gpt-oss-20b migration + retrieval-only LLM fallback | ✅ |
 
-**Current status:** ✅ v1.1.1 — MVP + packaging + privacy disclosures
+**Current status:** ✅ v1.1.2 — live on Streamlit Cloud; pytest + Docker CI on `main`
 
 ---
 
